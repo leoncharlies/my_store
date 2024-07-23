@@ -1,9 +1,16 @@
 import cv2
 import numpy as np
-from utils import open_operation,initialize_camera,read_frame
+from utils import open_operation,initialize_camera,read_frame,sent_data
 import math
 import time
 
+usual_run=bytearray([0xFE,0xBC,0x01,0xEF])
+slight_right=bytearray([0xFE,0xBC,0x02,0xEF])
+slight_left=bytearray([0xFE,0xBC,0x03,0xEF])
+turn_left=bytearray([0xFE,0xBC,0x04,0xEF])
+turn_right=bytearray([0xFE,0xBC,0x05,0xEF])
+stop=bytearray([0xFE,0xBC,0x00,0xEF])
+cross_run=bytearray([0xFE,0xBC,0x06,0xEF])
 ROIS = {
     'top': (160, 30, 320, 120, 0.1),
     'mid': (160, 210, 320, 120, 0.3),
@@ -80,15 +87,18 @@ class linefollower:
         else:
             DAngle = 0  # 如果没有找到任何色块，可以设置一个默认值
     
-        if abs(DAngle) > 20:
+        if abs(DAngle) > 10:
             if DAngle > 0:
-                print("Turn right")
+                print("slight right")
+                sent_data(slight_right)
                 print("Turn Angle: %f" % DAngle)
             elif DAngle < 0:
-                print("Turn left")
+                print("slight left")
+                sent_data(slight_left)
                 print("Turn Angle: %f" % DAngle)
         else:
-            print("Run")
+            print("usual Run")
+            sent_data(usual_run)
             print("Turn Angle: %f" % DAngle)
     
     def main(self):

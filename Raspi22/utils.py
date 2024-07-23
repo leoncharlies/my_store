@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import serial
+
 
 def initialize_camera(camera_index=0):
     """初始化打开摄像头，并设置分辨率"""
@@ -22,3 +24,7 @@ def open_operation(img):
     img=cv2.erode(img,k)
     img=cv2.dilate(img,k)
     return img
+
+def sent_data(mes):
+    dev=serial.Serial('dev/ttyUSB0',115200)
+    dev.write(mes)

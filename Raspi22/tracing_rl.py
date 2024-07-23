@@ -12,19 +12,19 @@ ROIS = {
     'right': (480, 30, 120, 420, 0.5)
 }
 
-lower=np.array([0, 0, 0])
-upper=np.array([255, 255, 255])
+lower=np.array([100, 43, 46])
+upper=np.array([124, 255, 255])
 
 class linefollower:
     def __init__(self,camera_id=0):
         self.camera = initialize_camera(camera_id)
 
-    def find_blobs_in_rois(img,ROIS,lower,upper):
+    def find_blobs_in_rois(self,img,ROIS,lower,upper):
         result = {}
         for dir,(x,y,w,h,weight) in ROIS.items():
             roi=img[y:y+h,x:x+w]
-            img=cv2.cvtColor(roi,cv2.COLOR_BGR2HSV)
-            mask= cv2.inRange(img,lower,upper)
+            HSV=cv2.cvtColor(roi,cv2.COLOR_BGR2HSV)
+            mask= cv2.inRange(HSV,lower,upper)
             contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             min_area = 100
@@ -39,8 +39,8 @@ class linefollower:
                     rect = (x + x_rect, y + y_rect, w_rect, h_rect)
                     # 计算轮廓的外接矩形
                     result[dir]={
-                        "cx":cx,
-                        "cy":cy,
+                        "cx":cx+x,
+                        "cy":cy+y,
                         "rect":rect,
                         "weight":weight,
                         "blob_flag":True
@@ -66,7 +66,7 @@ class linefollower:
                 }
         return result
     def get_angle(self,img):
-        blobs_in_rois=self.get_blobs_in_rois(img,ROIS,lower,upper)
+        blobs_in_rois=self.find_blobs_in_rois(img,ROIS,lower,upper)
         croid_sum = (blobs_in_rois['top']['cx'] * blobs_in_rois['top']['weight'] +
                  blobs_in_rois['mid']['cx'] * blobs_in_rois['mid']['weight'] +
                  blobs_in_rois['bot']['cx'] * blobs_in_rois['bot']['weight'])
@@ -98,3 +98,8 @@ class linefollower:
             img=open_operation(frame)
             self.get_angle(img=img)
             time.sleep(0.1)  # 控制循环的频率，这里设置为0.1秒一次
+            cv2.imshow('frame', img)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        cap.release()
+        cv2.destroyAllWindows()

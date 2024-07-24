@@ -1,8 +1,9 @@
 import cv2
 import numpy as np
-from utils import open_operation,initialize_camera,read_frame,sent_data
+from utils import open_operation,initialize_camera,read_frame,com
 import math
 import time
+import threading
 
 usual_run=bytearray([0xFE,0xBC,0x01,0xEF])
 slight_right=bytearray([0xFE,0xBC,0x02,0xEF])
@@ -25,6 +26,9 @@ upper=np.array([124, 255, 255])
 class linefollower:
     def __init__(self,camera_id=0):
         self.camera = initialize_camera(camera_id)
+        self.model = None
+        self.comm = com()
+        self.angle=0
 
     def find_blobs_in_rois(self,img,ROIS,lower,upper):
         result = {}
@@ -82,34 +86,17 @@ class linefollower:
                   blobs_in_rois['bot']['weight'])
         if weight_sum != 0:
             cpos = croid_sum / weight_sum
-            DAngle = -math.atan((cpos - 320) / 240)  # 假设中心点在图像中心 (320, 240)
-            DAngle = math.degrees(DAngle)
+            self.angle = -math.atan((cpos - 320) / 240)  # 假设中心点在图像中心 (320, 240)
+            self.angle= math.degrees(self.angle)
         else:
-            DAngle = 0  # 如果没有找到任何色块，可以设置一个默认值
+            self.angle = 0  # 如果没有找到任何色块，可以设置一个默认值
     
-        if abs(DAngle) > 10:
-            if DAngle > 0:
-                print("slight right")
-                sent_data(slight_right)
-                print("Turn Angle: %f" % DAngle)
-            elif DAngle < 0:
-                print("slight left")
-                sent_data(slight_left)
-                print("Turn Angle: %f" % DAngle)
-        else:
-            print("usual Run")
-            sent_data(usual_run)
-            print("Turn Angle: %f" % DAngle)
     
-    def main(self):
-        cap=self.camera
-        while True:
-            frame=read_frame(cap)
-            img=open_operation(frame)
-            self.get_angle(img=img)
-            time.sleep(0.1)  # 控制循环的频率，这里设置为0.1秒一次
-            cv2.imshow('frame', img)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        cap.release()
-        cv2.destroyAllWindows()
+    def detectmode(self):
+        key=self.com.get_data()
+        if key==1:
+            self.mode='out'
+        if key==2:
+            self.mode='in'
+
+    

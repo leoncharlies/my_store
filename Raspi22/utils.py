@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 import serial
-
+import threading
 
 def initialize_camera(camera_index=0):
     """初始化打开摄像头，并设置分辨率"""
@@ -25,6 +25,21 @@ def open_operation(img):
     img=cv2.dilate(img,k)
     return img
 
-def sent_data(mes):
-    dev=serial.Serial('dev/ttyUSB0',115200)
-    dev.write(mes)
+class com:
+    def __init__(self):
+        self.dev=serial.Serial('dev/ttyUSB0',115200)
+        self.received_data = None
+        self.thread = threading.Thread(target=self.read_data)
+        self.thread.daemon = True
+        self.thread.start()
+
+    def sent_data(self,mes):
+        self.dev.write(mes)
+
+    def read_data(self):
+        while True:
+            if self.dev.in_waiting > 0:
+                self.received_data = self.dev.read()
+
+    def get_data(self):
+        return self.received_data

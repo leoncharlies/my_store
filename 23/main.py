@@ -5,7 +5,7 @@ from follow_rect import find_blobs,draw_on_image
 
 class catcher:
     def __init__(self):
-        self.cap=initlize_camera(1)
+        self.cap=initlize_camera(0)
     
     def main(self):
         while True:

@@ -2,9 +2,18 @@ import cv2
 import numpy as np
 
 color_threashold = {
-    'lower': np.array([0, 0, 0]),
-    'upper': np.array([180, 255, 46])
+    'lower': np.array([0, 100, 100]),  # 或者[0, 50, 50]根据具体情况调整
+    'upper': np.array([10, 255, 255])
 }
+
+lower_red1 = np.array([0, 50, 50])
+upper_red1 = np.array([10, 255, 255])
+lower_red2 = np.array([170, 50, 50])
+upper_red2 = np.array([180, 255, 255])
+
+lower_white = np.array([0, 0, 200])
+upper_white = np.array([180, 55, 255])
+
 min_area=100
 def find_blobs(image):                                  #仅适用于正放的方框
     result={'x':-1,'y':-1,'w':-1,'h':-1,'flag':False}
@@ -21,7 +30,7 @@ def find_blobs(image):                                  #仅适用于正放的�
             print("No object found")
     return result
 
-def draw_on_image(image,result):
+def draw_on_image_rect(image,result):
     if result['flag']:
         cv2.rectangle(image,(result['x'],result['y']),(result['x']+result['w'],result['y']+result['h']),(0,255,0),2)
         print("x:{}, y:{}, w:{}, h:{}".format(result['x'],result['y'],result['w'],result['h']))
@@ -45,4 +54,37 @@ def find_blobs_random(image):                           #适用于斜放的方�
             for point in points:
                 print(point) 
             result=[points,True]
-            
+
+
+def find_laser_point_position(image):
+    result = {'x': -1, 'y': -1, 'flag': False}
+    
+    # 转换为 HSV 色彩空间
+    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+    
+    # 获取白色的掩膜
+    mask_white = cv2.inRange(hsv, lower_white, upper_white)
+    contours, _ = cv2.findContours(mask_white, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    
+    if contours:
+        # 查找面积最大的轮廓
+        max_contour = max(contours, key=cv2.contourArea)
+        
+        # 如果轮廓的面积超过一定阈值（排除噪声）
+        if cv2.contourArea(max_contour) > 10:  # 面积阈值可以根据实际情况调整
+            M = cv2.moments(max_contour)
+            if M['m00'] != 0:
+                # 计算中心坐标
+                cx = int(M['m10'] / M['m00'])
+                cy = int(M['m01'] / M['m00'])
+                result = {'x': cx, 'y': cy, 'flag': True}
+    
+    # 可视化结果
+    if result['flag']:
+        cv2.circle(image, (result['x'], result['y']), 5, (0, 255, 0), -1)
+        print("x:{}, y:{}".format(result['x'], result['y']))
+    else:
+        #print("Laser point not found")
+        pass
+    
+    return result

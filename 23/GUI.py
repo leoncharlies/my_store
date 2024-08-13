@@ -1,13 +1,15 @@
 import tkinter as tk
 import tkinter.ttk as ttk
 import threading
-from test_find import test
+from catcher import catcher
+from motor import motor_controller
 
 class GUI_manager(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("23-NUETC")
-        self.t = test()
+        self.t = catcher()
+        self.m = motor_controller()
         self.stop_event_jiaozhun = threading.Event()
         # 初始化
         self.frm_main = ttk.Frame(self, padding=10)
@@ -18,12 +20,12 @@ class GUI_manager(tk.Tk):
 
     def create_main_frame(self):
         self.frm_main.grid()
-        ttk.Label(self.frm_main, text="Hello World!").grid(column=1, row=0)
+        ttk.Label(self.frm_main, text="23-NUETC-E").grid(column=1, row=0)
         ttk.Button(self.frm_main, text="校准", command=self.switch_to_jiaozhen).grid(column=1, row=1)
-        ttk.Button(self.frm_main, text="第一题", command=lambda: print("第一题")).grid(column=1, row=2)
+        ttk.Button(self.frm_main, text="复位", command=self.m.steering_reset()).grid(column=1, row=2)
         ttk.Button(self.frm_main, text="第二题", command=lambda: print("第二题")).grid(column=1, row=3)
         ttk.Button(self.frm_main, text="第三题", command=lambda: print("第三题")).grid(column=1, row=4)
-        ttk.Button(self.frm_main, text="Quit", command=self.destroy).grid(column=1, row=5)
+        ttk.Button(self.frm_main, text="退出", command=self.destroy).grid(column=1, row=5)
 
     def create_jiaozhen_frame(self):
         ttk.Label(self.frm_jiaozhen, text="校准").grid(column=1, row=0)
@@ -31,6 +33,13 @@ class GUI_manager(tk.Tk):
         ttk.Button(self.frm_jiaozhen, text="打印坐标", command=lambda: print(self.t.corner_location)).grid(column=1, row=2)
         ttk.Button(self.frm_jiaozhen, text="退出", command=self.exit_jiaozhen).grid(column=1, row=3)
 
+    def caculate_width(self):
+        if len(self.t.corner_location)!=4:
+            print("corner_location is not 4")
+            return
+        self.m.x_width=(abs(self.t.corner_location[0][0]-self.t.corner_location[1][0])+abs(self.t.corner_location[2][0]-self.t.corner_location[3][0]))/2
+        self.m.y_width=(abs(self.t.corner_location[0][1]-self.t.corner_location[2][1])+abs(self.t.corner_location[1][1]-self.t.corner_location[3][1]))/2
+        print("x_width:",self.m.x_width,"y_width:",self.m.y_width)
     def toggle_write_down(self):
         self.t.is_write_down = not self.t.is_write_down  
 
@@ -45,6 +54,7 @@ class GUI_manager(tk.Tk):
         if hasattr(self, 'thread'):
             self.thread.join()
         self.t.exit()
+        self.caculate_width()
         self.frm_jiaozhen.grid_forget()
         self.frm_main.grid()
     

@@ -23,7 +23,7 @@ class catcher:
                 break
             stop_event.wait(0.01)
         self.exit() 
-    
+
     def exit(self):
         self.cap.release()
         cv2.destroyAllWindows()
